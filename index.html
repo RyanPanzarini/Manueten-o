@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observabilidade & Monitoramento - Manutenção Contínua</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://kit.fontawesome.com/a5a8f5a3a1.js" crossorigin="anonymous"></script>
+    <style>
+        /* Custom styles for animations and layout */
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section {
+            min-height: 100vh;
+            scroll-snap-align: start;
+        }
+        .scroll-container {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            height: 100vh;
+        }
+        /* Pulse animation for alerts */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        /* Log stream animation */
+        .log-stream {
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        .log-item {
+            margin-bottom: 2px;
+            padding: 2px 4px;
+            border-radius: 2px;
+            animation: slideIn 0.2s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        /* Tab styling */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        /* Dark mode toggle */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <!-- Dark mode toggle -->
+    <div class="fixed top-4 right-4 z-50">
+        <div class="relative inline-block w-12 mr-2 align-middle select-none">
+            <input type="checkbox" name="toggle" id="toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+            <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+        </div>
+        <span class="text-sm font-medium">Dark Mode</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed bottom-4 left-0 right-0 z-40 flex justify-center">
+        <div class="bg-white dark:bg-gray-800 rounded-full shadow-lg p-2 flex space-x-1">
+            <a href="#home" class="nav-link p-2 rounded-full hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors" data-section="home">
+                <i class="fas fa-home text-blue-500 dark:text-blue-400"></i>
+            </a>
+            <a href="#monitoring" class="nav-link p-2 rounded-full hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors" data-section="monitoring">
+                <i class="fas fa-chart-line text-purple-500 dark:text-purple-400"></i>
+            </a>
+            <a href="#observability" class="nav-link p-2 rounded-full hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors" data-section="observability">
+                <i class="fas fa-search text-green-500 dark:text-green-400"></i>
+            </a>
+            <a href="#simulation" class="nav-link p-2 rounded-full hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors" data-section="simulation">
+                <i class="fas fa-flask text-yellow-500 dark:text-yellow-400"></i>
+            </a>
+        </div>
+    </nav>
+
+    <div class="scroll-container">
+        <!-- Home Section -->
+        <section id="home" class="section flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 p-4">
+            <div class="container max-w-4xl mx-auto text-center px-4 fade-in">
+                <div class="inline-block p-4 bg-blue-100 dark:bg-blue-900 rounded-full mb-6">
+                    <i class="fas fa-chart-network text-4xl text-blue-500 dark:text-blue-300"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">
+                    Observabilidade & Monitoramento na Manutenção Contínua
+                </h1>
+                <p class="text-lg md:text-xl mb-8 leading-relaxed text-gray-700 dark:text-gray-300">
+                    Entenda como essas duas práticas essenciais trabalham juntas para manter seus sistemas estáveis e resilientes. O monitoramento nos alerta quando algo conhecido está errado, enquanto a observabilidade nos ajuda a investigar o desconhecido.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="#monitoring" class="inline-flex items-center px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full transition-all transform hover:scale-105">
+                        <i class="fas fa-chart-line mr-2"></i> Monitoramento
+                    </a>
+                    <a href="#observability" class="inline-flex items-center px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-full transition-all transform hover:scale-105">
+                        <i class="fas fa-search mr-2"></i> Observabilidade
+                    </a>
+                    <a href="#simulation" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium rounded-full transition-all transform hover:scale-105">
+                        <i class="fas fa-flask mr-2"></i> Simulação Interativa
+                    </a>
+                </div>
+                <div class="mt-12 animate-bounce">
+                    <a href="#monitoring" class="text-blue-500 dark:text-blue-300">
+                        <i class="fas fa-chevron-down text-2xl"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Monitoring Section -->
+        <section id="monitoring" class="section bg-white dark:bg-gray-800 p-6">
+            <div class="container max-w-6xl mx-auto fade-in">
+                <h2 class="text-3xl font-bold mb-4 text-purple-600 dark:text-purple-400">
+                    <i class="fas fa-chart-line mr-2"></i> Monitoramento
+                </h2>
+                <p class="text-lg mb-8 text-gray-700 dark:text-gray-300">
+                    O monitoramento é baseado em métricas pré-definidas para detectar falhas conhecidas. Ele nos alerta quando os limites estabelecidos são ultrapassados.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <!-- Alert Panel -->
+                        <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg fade-in">
+                            <div class="flex items-center">
+                                <div class="pulse">
+                                    <i class="fas fa-exclamation-triangle text-red-500 dark:text-red-400 text-xl mr-3"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-red-800 dark:text-red-200 font-bold">Alerta Crítico!</h3>
+                                    <p class="text-red-600 dark:text-red-300">CPU acima de 90% - 15:42:23</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metrics Dashboard -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- CPU Graph -->
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-sm">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="font-medium text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-microchip mr-2 text-blue-500"></i> Uso de CPU
+                                    </h3>
+                                    <span class="text-sm font-bold text-blue-500">92%</span>
+                                </div>
+                                <div class="h-40">
+                                    <canvas id="cpuChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Memory Graph -->
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-sm">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="font-medium text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-memory mr-2 text-purple-500"></i> Uso de Memória
+                                    </h3>
+                                    <span class="text-sm font-bold text-purple-500">74%</span>
+                                </div>
+                                <div class="h-40">
+                                    <canvas id="memoryChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- RPS Graph -->
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-sm md:col-span-2">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="font-medium text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-exchange-alt mr-2 text-green-500"></i> Requisições por Segundo (RPS)
+                                    </h3>
+                                    <span class="text-sm font-bold text-green-500">2.4K</span>
+                                </div>
+                                <div class="h-40">
+                                    <canvas id="rpsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <div class="bg-blue-50 dark:bg-gray-700 p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                            <h3 class="text-xl font-bold mb-4 text-blue-600 dark:text-blue-300">
+                                Entendendo o Monitoramento
+                            </h3>
+                            <p class="mb-4 text-gray-700 dark:text-gray-300">
+                                O monitoramento é como o painel de controle do seu carro - ele mostra velocidade, RPM, temperatura do motor e outros indicadores conhecidos.
+                            </p>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="mr-3 mt-1 text-blue-500">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium">Métricas Definidas</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            São coletados dados específicos como uso de CPU, memória, latência e erros.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="mr-3 mt-1 text-blue-500">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium">Alertas Configurados</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Limites são estabelecidos para acionar alertas quando algo sai do esperado.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="mr-3 mt-1 text-blue-500">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium">Visualização Clara</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Dashboards mostram tendências e o estado atual do sistema.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 p-4 bg-yellow-50 dark:bg-gray-600 rounded-lg">
+                                <p class="text-yellow-700 dark:text-yellow-300">
+                                    <i class="fas fa-info-circle mr-2"></i> Importante: O monitoramento é ótimo para problemas conhecidos, mas limitado para falhas novas ou inesperadas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Observability Section -->
+        <section id="observability" class="section bg-gray-50 dark:bg-gray-900 p-6">
+            <div class="container max-w-6xl mx-auto fade-in">
+                <h2 class="text-3xl font-bold mb-4 text-green-600 dark:text-green-400">
+                    <i class="fas fa-search mr-2"></i> Observabilidade
+                </h2>
+                <p class="text-lg mb-8 text-gray-700 dark:text-gray-300">
+                    Enquanto o monitoramento nos diz que algo está errado, a observabilidade nos permite entender por quê. Ela é baseada em três pilares principais:
+                </p>
+
+                <!-- Tabs Navigation -->
+                <div class="flex overflow-x-auto space-x-2 mb-6 pb-2">
+                    <button class="tab-btn px-4 py-2 bg-white dark:bg-gray-800 rounded-t-lg font-medium border-b-2 border-transparent hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 focus:outline-none active" data-tab="logs">
+                        <i class="fas fa-file-alt mr-2"></i> Logs
+                    </button>
+                    <button class="tab-btn px-4 py-2 bg-white dark:bg-gray-800 rounded-t-lg font-medium border-b-2 border-transparent hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 focus:outline-none" data-tab="metrics">
+                        <i class="fas fa-chart-bar mr-2"></i> Métricas
+                    </button>
+                    <button class="tab-btn px-4 py-2 bg-white dark:bg-gray-800 rounded-t-lg font-medium border-b-2 border-transparent hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 focus:outline-none" data-tab="tracing">
+                        <i class="fas fa-project-diagram mr-2"></i> Tracing
+                    </button>
+                </div>
+
+                <!-- Tabs Content -->
+                <div class="bg-white dark:bg-gray-800 rounded-b-lg rounded-tr-lg shadow-sm p-6 min-h-[400px]">
+                    <!-- Logs Tab -->
+                    <div id="logs-tab" class="tab-content active">
+                        <h3 class="text-xl font-bold mb-4 text-green-600 dark:text-green-400">
+                            <i class="fas fa-file-alt mr-2"></i> Logs
+                        </h3>
+                        <p class="mb-4 text-gray-700 dark:text-gray-300">
+                            Registros estruturados de eventos que ocorreram no sistema, incluindo informações de depuração, erros e atividades.
+                        </p>
+                        
+                        <div class="log-stream bg-gray-900 rounded-lg p-3 text-green-400 font-mono text-sm">
+                            <div class="log-item">[15:42:20] INFO: Iniciando servidor na porta 8080</div>
+                            <div class="log-item">[15:42:21] INFO: Conexão estabelecida com o banco de dados</div>
+                            <div class="log-item">[15:42:22] WARN: Latência alta detectada na rede</div>
+                            <div class="log-item">[15:42:23] ERROR: Falha ao processar requisição /api/data</div>
+                            <div class="log-item">[15:42:23] ERROR: Exceção NullPointerException em UserService.java:42</div>
+                            <div class="log-item">[15:42:24] DEBUG: Tentativa de reconexão ao serviço de pagamento</div>
+                            <div class="log-item">[15:42:25] ERROR: Falha na autenticação do token JWT</div>
+                            <!-- More logs will be added by JavaScript -->
+                        </div>
+                        
+                        <div class="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-info-circle mr-2"></i> Logs estruturados com formatos como JSON facilitam a análise e filtragem automática.
+                        </div>
+                    </div>
+
+                    <!-- Metrics Tab -->
+                    <div id="metrics-tab" class="tab-content">
+                        <h3 class="text-xl font-bold mb-4 text-green-600 dark:text-green-400">
+                            <i class="fas fa-chart-bar mr-2"></i> Métricas
+                        </h3>
+                        <p class="mb-4 text-gray-700 dark:text-gray-300">
+                            Dados numéricos coletados ao longo do tempo que ajudam a entender o comportamento do sistema.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <h4 class="font-medium mb-2 dark:text-gray-300">Latência das Requisições (ms)</h4>
+                                <div class="h-40">
+                                    <canvas id="latencyChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <h4 class="font-medium mb-2 dark:text-gray-300">Taxa de Erros (%)</h4>
+                                <div class="h-40">
+                                    <canvas id="errorRateChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-4 bg-blue-50 dark:bg-gray-700 rounded-lg">
+                            <p class="text-blue-700 dark:text-blue-300">
+                                <i class="fas fa-lightbulb mr-2"></i> Dica: Na observabilidade, as métricas são analisadas em conjunto com logs e tracing para investigar problemas complexos.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tracing Tab -->
+                    <div id="tracing-tab" class="tab-content">
+                        <h3 class="text-xl font-bold mb-4 text-green-600 dark:text-green-400">
+                            <i class="fas fa-project-diagram mr-2"></i> Tracing Distribuído
+                        </h3>
+                        <p class="mb-4 text-gray-700 dark:text-gray-300">
+                            Registra o caminho de uma requisição através de serviços distribuídos, mostrando onde o tempo é gasto e onde falhas ocorrem.
+                        </p>
+                        
+                        <div id="tracing-diagram" class="mermaid">
+                            sequenceDiagram
+                                participant U as Usuário
+                                participant A as API Gateway
+                                participant B as Serviço B
+                                participant C as Serviço C
+                                participant D as Banco de Dados
+
+                                U->>A: POST /api/order
+                                A->>B: Valida dados (10ms)
+                                B->>C: Processa pagamento (230ms)
+                                Note left of C: Falha 500<br/>Timeout
+                                C-->>B: Erro
+                                B-->>A: Erro
+                                A-->>U: HTTP 500
+                        </div>
+                        
+                        <div class="mt-4 p-4 bg-purple-50 dark:bg-gray-700 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="mr-3 text-purple-500">
+                                    <i class="fas fa-search-plus"></i>
+                                </div>
+                                <div>
+                                    <p class="text-purple-700 dark:text-purple-300">
+                                        O tracing mostra que a falha ocorreu no serviço de pagamento, permitindo investigação focada. Sem observabilidade, descobrir isso seria como procurar uma agulha no palheiro.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                    <h3 class="text-xl font-bold mb-4 text-green-600 dark:text-green-400">
+                        <i class="fas fa-puzzle-piece mr-2"></i> Como os Três Pilares Trabalham Juntos
+                    </h3>
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">
+                        Numa arquitetura moderna, logs, métricas e tracing se complementam para fornecer visibilidade total do sistema:
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="text-center mb-3 text-blue-500">
+                                <i class="fas fa-file-alt text-3xl"></i>
+                            </div>
+                            <h4 class="text-center font-bold mb-2">Logs</h4>
+                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                Capturam eventos individuais com contexto detalhado, essencial para depuração.
+                            </p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="text-center mb-3 text-purple-500">
+                                <i class="fas fa-chart-line text-3xl"></i>
+                            </div>
+                            <h4 class="text-center font-bold mb-2">Métricas</h4>
+                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                Fornecem visão agregada do comportamento ao longo do tempo para identificar padrões.
+                            </p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="text-center mb-3 text-green-500">
+                                <i class="fas fa-project-diagram text-3xl"></i>
+                            </div>
+                            <h4 class="text-center font-bold mb-2">Tracing</h4>
+                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                Mostram o fluxo de trabalho através dos serviços, identificando gargalos e falhas.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulation Section -->
+        <section id="simulation" class="section bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 p-6">
+            <div class="container max-w-5xl mx-auto fade-in">
+                <h2 class="text-3xl font-bold mb-4 text-orange-600 dark:text-orange-400">
+                    <i class="fas fa-flask mr-2"></i> Simulação Interativa
+                </h2>
+                <p class="text-lg mb-8 text-gray-700 dark:text-gray-300">
+                    Experimente como observabilidade e monitoramento trabalham juntos em um cenário real. Clique no botão abaixo para simular um deploy problemático.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Control Panel -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 h-full">
+                            <h3 class="text-xl font-bold mb-4 text-orange-600 dark:text-orange-400">
+                                <i class="fas fa-sliders-h mr-2"></i> Painel de Controle
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                                    <h4 class="font-medium mb-2 dark:text-gray-300">Estado do Sistema</h4>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm dark:text-gray-400">Status:</span>
+                                        <span id="system-status" class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm rounded-full">
+                                            <i class="fas fa-check-circle mr-1"></i> Estável
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button id="deploy-btn" class="w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all transform hover:scale-105 focus:outline-none">
+                                    <i class="fas fa-rocket mr-2"></i> Realizar Deploy
+                                </button>
+
+                                <div id="investigate-panel" class="hidden bg-yellow-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-yellow-500 mt-4">
+                                    <h4 class="font-bold mb-2 text-yellow-700 dark:text-yellow-300">
+                                        <i class="fas fa-search mr-2"></i> Investigação
+                                    </h4>
+                                    <p class="text-sm text-yellow-600 dark:text-yellow-300 mb-3">
+                                        Analise os logs e o trace para encontrar a causa raiz do erro.
+                                    </p>
+                                    <button id="investigate-btn" class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-lg focus:outline-none">
+                                        Investigar Erro
+                                    </button>
+                                </div>
+
+                                <div id="solution-panel" class="hidden bg-green-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-green-500 mt-4">
+                                    <h4 class="font-bold mb-2 text-green-700 dark:text-green-300">
+                                        <i class="fas fa-check-circle mr-2"></i> Causa Encontrada
+                                    </h4>
+                                    <p class="text-sm text-green-600 dark:text-green-300 mb-2">
+                                        A análise observável revelou:
+                                    </p>
+                                    <ul class="list-disc list-inside text-sm text-green-600 dark:text-green-300 space-y-1">
+                                        <li>O novo microsserviço de pagamento está retornando erro 500</li>
+                                        <li>O timeout configurado é muito curto (200ms)</li>
+                                        <li>Erro nos logs: "Falha ao conectar no banco de dados"</li>
+                                    </ul>
+                                    <button id="reset-btn" class="w-full mt-3 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-lg focus:outline-none">
+                                        <i class="fas fa-redo mr-2"></i> Reiniciar Simulação
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulation Dashboard -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <!-- Metrics -->
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <h3 class="font-medium mb-2 dark:text-gray-300">
+                                        <i class="fas fa-chart-pie mr-2 text-orange-500"></i> Métricas Pós-Deploy
+                                    </h3>
+                                    <div class="h-48">
+                                        <canvas id="simulationChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Error Rate -->
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <h3 class="font-medium mb-2 dark:text-gray-300">
+                                        <i class="fas fa-bug mr-2 text-red-500"></i> Taxa de Erros
+                                    </h3>
+                                    <div class="h-48">
+                                        <canvas id="errorChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Logs and Tracing -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Log Stream -->
+                                <div class="bg-gray-900 rounded-lg p-3 h-64">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="font-medium text-green-400">
+                                            <i class="fas fa-file-alt mr-2"></i> Log Stream
+                                        </h3>
+                                        <span class="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full" id="error-count">0 erros</span>
+                                    </div>
+                                    <div class="log-stream h-48 overflow-y-auto text-green-400 font-mono text-xs">
+                                        <div class="log-item">[15:50:00] INFO: Sistema inicializado</div>
+                                        <div class="log-item">[15:50:01] INFO: Rotas configuradas</div>
+                                        <!-- Logs will be added by JavaScript -->
+                                    </div>
+                                </div>
+
+                                <!-- Tracing -->
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 h-64">
+                                    <h3 class="font-medium mb-2 dark:text-gray-300">
+                                        <i class="fas fa-project-diagram mr-2 text-blue-500"></i> Tracing Distribuído
+                                    </h3>
+                                    <div id="simulation-tracing" class="bg-white rounded p-2 h-48 overflow-auto">
+                                        <img id="tracing-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgMjAwIj48c3R5bGU+LmJhc2Uge2ZpbGw6bm9uZTtzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MnB4O30udGV4dCB7Zm9udC1mYW1pbHk6QXJpYWw7Zm9udC1zaXplOjE0cHg7fTwvc3R5bGU+PHBhdGggZD0iTTUwIDEwIEwxNTAgMTAgTDIwMCA2MCBMMzAwIDE2MCBINDQwIiBjbGFzcz0iYmFzZSIvPjx0ZXh0IHg9IjUiIHk9IjMwIiBjbGFzcz0idGV4dCI+TWFyY2FQZWRpZG9zPC90ZXh0Pjx0ZXh0IHg9IjE1NSIgeT0iMzAiIGNsYXNzPSJ0ZXh0Ij5BdXRlbnRpY2FjYW88L3RleHQ+PHRleHQgeD0iMjA1IiB5PSI5MCIgY2xhc3M9InRleHQiPlBhZ2FtZW50bzwvdGV4dD48dGV4dCB4PSIzMDUiIHk9IjE4MCIgY2xhc3M9InRleHQiPk5vdGlmaWNhY2FvPC90ZXh0PjxjYXB0aW9uIHg9IjI1MCIgeT0iMTkwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTBweCIgZmlsbD0iIzU1NSI+TWVkaWQ6IDE2MG1zPC9jYXB0aW9uPjwvc3ZnPg==" class="w-full h-full object-contain" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                    <h3 class="text-xl font-bold mb–4 text-blue-600 dark:text-blue-300">
+                        <i class="fas fa-book-open mr-2"></i> Conclusão
+                    </h3>
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">
+                        Esta simulação mostra como a combinação de monitoramento (alertando sobre o aumento de erros) e observabilidade (usando logs e tracing para encontrar a causa) ajuda equipes a resolverem problemas rapidamente em sistemas complexos.
+                    </p>
+                    <p class="text-blue-600 dark:text-blue-300">
+                        <i class="fas fa-lightbulb mr-2"></i> Em ambientes de produção reais, essas ferramentas são essenciais para manter sistemas confiáveis e rápidos para resolver incidentes.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        const toggle = document.getElementById('toggle');
+        toggle.addEventListener('change', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+            initializeCharts();
+        });
+
+        // Set initial dark mode from localStorage or prefer-color-scheme
+        if (localStorage.getItem('darkMode') === 'true' || 
+            (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            toggle.checked = true;
+        }
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Highlight active nav link based on scroll position
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                
+                if (pageYOffset >= (sectionTop - sectionHeight / 3)) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('bg-blue-100', 'dark:bg-gray-700');
+                if (link.dataset.section === current) {
+                    link.classList.add('bg-blue-100', 'dark:bg-gray-700');
+                }
+            });
+        });
+
+        // Tab functionality
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active', 'border-green-500', 'text-green-600', 'dark:text-green-400'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active', 'border-green-500', 'text-green-600', 'dark:text-green-400');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+                
+                // Reinitialize charts when switching to metrics tab
+                if (tabId === 'metrics') {
+                    initializeLatencyChart();
+                    initializeErrorRateChart();
+                }
+                
+                // Initialize mermaid when switching to tracing tab
+                if (tabId === 'tracing') {
+                    initializeMermaid();
+                }
+            });
+        });
+
+        // Initialize Mermaid
+        function initializeMermaid() {
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+                flowchart: {
+                    useMaxWidth: true,
+                    htmlLabels: true,
+                    curve: 'basis'
+                }
+            });
+            
+            // Re-render the diagram
+            const diagram = document.getElementById('tracing-diagram');
+            if (diagram) {
+                const diagramContent = diagram.innerHTML;
+                diagram.innerHTML = diagramContent;
+                mermaid.init(undefined, diagram);
+            }
+        }
+
+        // Initialize all charts
+        function initializeCharts() {
+            initializeCPUChart();
+            initializeMemoryChart();
+            initializeRPSChart();
+            initializeLatencyChart();
+            initializeErrorRateChart();
+            initializeSimulationChart();
+            initializeErrorChart();
+        }
+
+        // Chart configuration
+        let cpuChart, memoryChart, rpsChart, latencyChart, errorRateChart, simulationChart, errorChart;
+
+        function initializeCPUChart() {
+            const ctx = document.getElementById('cpuChart').getContext('2d');
+            
+            if (cpuChart) cpuChart.destroy();
+            
+            cpuChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 30}, (_, i) => (i * 10 / 60).toFixed(1)),
+                    datasets: [{
+                        label: 'Uso da CPU (%)',
+                        data: [40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 91, 92, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: getChartOptions('Tempo (minutos)', 'Uso (%)')
+            });
+        }
+
+        function initializeMemoryChart() {
+            const ctx = document.getElementById('memoryChart').getContext('2d');
+            
+            if (memoryChart) memoryChart.destroy();
+            
+            memoryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 30}, (_, i) => (i * 10 / 60).toFixed(1)),
+                    datasets: [{
+                        label: 'Uso de Memória (%)',
+                        data: [50, 52, 55, 57, 60, 62, 65, 67, 69, 70, 71, 72, 72, 73, 73, 73, 74, 74, 74, 73, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64],
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: getChartOptions('Tempo (minutos)', 'Uso (%)')
+            });
+        }
+
+        function initializeRPSChart() {
+            const ctx = document.getElementById('rpsChart').getContext('2d');
+            
+            if (rpsChart) rpsChart.destroy();
+            
+            rpsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 30}, (_, i) => (i * 10 / 60).toFixed(1)),
+                    datasets: [{
+                        label: 'Requisições por Segundo',
+                        data: [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2300, 2200, 2100, 2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200, 1100, 1000, 900],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: getChartOptions('Tempo (minutos)', 'RPS')
+            });
+        }
+
+        function initializeLatencyChart() {
+            const ctx = document.getElementById('latencyChart').getContext('2d');
+            
+            if (latencyChart) latencyChart.destroy();
+            
+            latencyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['API Gateway', 'Serviço A', 'Serviço B', 'Banco de Dados', 'Cache'],
+                    datasets: [{
+                        label: 'Latência (ms)',
+                        data: [5, 15, 45, 120, 2],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(236, 72, 153, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(236, 72, 153, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: getChartOptions('Serviço', 'Latência (ms)', true)
+            });
+        }
+
+        function initializeErrorRateChart() {
+            const ctx = document.getElementById('errorRateChart').getContext('2d');
+            
+            if (errorRateChart) errorRateChart.destroy();
+            
+            errorRateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 60}, (_, i) => i + 1),
+                    datasets: [{
+                        label: 'Taxa de Erros (%)',
+                        data: Array(60).fill(0).map((_, i) => {
+                            if (i < 15) return Math.random() * 0.5;
+                            if (i < 25) return Math.random() * 2 + 1;
+                            if (i < 35) return Math.random() * 10 + 5;
+                            return Math.random() * 20 + 15;
+                        }),
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.1,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: getChartOptions('Tempo (minutos)', 'Taxa de Erros (%)')
+            });
+        }
+
+        function initializeSimulationChart() {
+            const ctx = document.getElementById('simulationChart').getContext('2d');
+            
+            if (simulationChart) simulationChart.destroy();
+            
+            simulationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => i),
+                    datasets: [
+                        {
+                            label: 'CPU (%)',
+                            data: [55, 56, 56, 57, 57, 58, 59, 59, 60, 60, 61, 62, 62, 63, 64, 65, 66, 67, 68, 70, 75, 80, 85, 90],
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Memória (%)',
+                            data: [60, 60, 61, 61, 61, 62, 62, 62, 63, 63, 63, 64, 64, 65, 65, 65, 65, 66, 66, 67, 68, 70, 75, 80],
+                            borderColor: '#8B5CF6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.3,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: getChartOptions('Tempo (minutos)', 'Uso (%)', false, true)
+            });
+        }
+
+        function initializeErrorChart() {
+            const ctx = document.getElementById('errorChart').getContext('2d');
+            
+            if (errorChart) errorChart.destroy();
+            
+            errorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => i),
+                    datasets: [{
+                        label: 'Erros por Minuto',
+                        data: [2, 1, 0, 1, 0, 2, 1, 0, 3, 2, 1, 0, 2, 1, 3, 2, 5, 8, 15, 30, 80, 150, 250, 400],
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: getChartOptions('Tempo (minutos)', 'Erros', false, true)
+            });
+        }
+
+        function getChartOptions(xLabel, yLabel, isBar = false, hideLegend = false) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#E5E7EB' : '#374151';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: !hideLegend,
+                        position: 'top',
+                        labels: {
+                            color: textColor
+                        }
+                    },
+                    tooltip: {
+                        mode: isBar ? 'index' : 'nearest',
+                        intersect: false,
+                        backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+                        titleColor: textColor,
+                        bodyColor: textColor,
+                        borderColor: isDark ? '#4B5563' : '#E5E7EB',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: xLabel,
+                            color: textColor
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: yLabel,
+                            color: textColor
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor
+                        },
+                        beginAtZero: true
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
+                animation: {
+                    duration: 1000
+                }
+            };
+        }
+
+        // Simulated log generator
+        function generateSimulatedLog() {
+            const types = ['INFO', 'DEBUG', 'WARN', 'ERROR'];
+            const messages = [
+                'Requisição processada com sucesso',
+                'Falha ao conectar no banco de dados',
+                'Tempo de resposta acima do esperado',
+                'Autenticação falhou para o usuário',
+                'Cache miss para a chave',
+                'Timeout ao chamar serviço externo',
+                'Dados inválidos recebidos na requisição',
+                'Falha de validação do schema',
+                'Erro interno do servidor',
+                'Recurso não encontrado'
+            ];
+            
+            const services = ['AuthService', 'UserService', 'PaymentService', 'CatalogService', 'APIGateway'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            const service = services[Math.floor(Math.random() * services.length)];
+            
+            // Get current time
+            const now = new Date();
+            const time = now.toLocaleTimeString('pt-BR', {hour12: false});
+            
+            return {
+                time,
+                type,
+                service,
+                message,
+                toString() {
+                    return `[${this.time}] ${this.type}: ${this.message} (${this.service})`;
+                }
+            };
+        }
+
+        // Simulation functionality
+        const deployBtn = document.getElementById('deploy-btn');
+        const investigateBtn = document.getElementById('investigate-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const investigatePanel = document.getElementById('investigate-panel');
+        const solutionPanel = document.getElementById('solution-panel');
+        const systemStatus = document.getElementById('system-status');
+        const errorCount = document.getElementById('error-count');
+        const simulationLogs = document.querySelector('#simulation .log-stream');
+        let errorCounter = 0;
+        let logInterval;
+
+        deployBtn.addEventListener('click', () => {
+            // Change system status
+            systemStatus.className = 'px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm rounded-full';
+            systemStatus.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> Crítico';
+            
+            // Enable investigate button after delay
+            deployBtn.disabled = true;
+            deployBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin mr-2"></i> Deploy em andamento...';
+            
+            setTimeout(() => {
+                deployBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Deploy concluído';
+                investigatePanel.classList.remove('hidden');
+                
+                // Update error count
+                errorCounter = 12;
+                errorCount.textContent = `${errorCounter} erros`;
+                errorCount.className = 'text-xs bg-red-500 text-white px-2 py-1 rounded-full';
+                
+                // Update tracing image
+                document.getElementById('tracing-img').src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgMjAwIj48c3R5bGU+LmJhc2Uge2ZpbGw6bm9uZTtzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MnB4O30udGV4dCB7Zm9udC1mYW1pbHk6QXJpYWw7Zm9udC1zaXplOjE0cHg7fS5lcnJvciB7c3Ryb2tlOiNGRjAwMDA7fTwvc3R5bGU+PHBhdGggZD0iTTUwIDEwIEwxNTAgMTAgTDIwMCA2MCBMMzAwIDE2MCBINDQwIiBjbGFzcz0iYmFzZSIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjE2MCIgcj0iMTAiIGNsYXNzPSJlcnJvciIgZmlsbD0iI0ZGNDMzQyIvPjx0ZXh0IHg9IjUiIHk9IjMwIiBjbGFzcz0idGV4dCI+TWFyY2FQZWRpZG9zPC90ZXh0Pjx0ZXh0IHg9IjE1NSIgeT0iMzAiIGNsYXNzPSJ0ZXh0Ij5BdXRlbnRpY2FjYW88L3RleHQ+PHRleHQgeD0iMjA1IiB5PSI5MCIgY2xhc3M9InRleHQiPlBhZ2FtZW50bzwvdGV4dD48dGV4dCB4PSIzMDUiIHk9IjE4MCIgY2xhc3M9InRleHQiPk5vdGlmaWNhY2FvPC90ZXh0PjxjYXB0aW9uIHg9IjI1MCIgeT0iMTkwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTBweCIgZmlsbD0iIzU1NSI+TWVkaWQ6IDE2MG1zPC9jYXB0aW9uPjwvc3ZnPg==";
+                
+                // Start generating logs
+                if (logInterval) clearInterval(logInterval);
+                logInterval = setInterval(() => {
+                    const log = generateSimulatedLog();
+                    const logElement = document.createElement('div');
+                    logElement.className = `log-item ${log.type === 'ERROR' ? 'bg-red-900/50 text-red-300' : log.type === 'WARN' ? 'bg-yellow-900/50 text-yellow-300' : 'bg-green-900/50'}`;
+                    logElement.textContent = log.toString();
+                    
+                    // Only add some logs to the simulation panel
+                    if (Math.random() > 0.3) {
+                        simulationLogs.appendChild(logElement);
+                        
+                        // Count errors
+                        if (log.type === 'ERROR') {
+                            errorCounter++;
+                            errorCount.textContent = `${errorCounter} erros`;
+                        }
+                    }
+                    
+                    // Auto-scroll to bottom
+                    simulationLogs.scrollTop = simulationLogs.scrollHeight;
+                }, 1000);
+                
+                // Update charts to show issues
+                updateSimulationChartsAfterDeploy();
+            }, 2000);
+        });
+
+        investigateBtn.addEventListener('click', () => {
+            investigatePanel.classList.add('hidden');
+            solutionPanel.classList.remove('hidden');
+            
+            // Stop generating logs
+            if (logInterval) clearInterval(logInterval);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            // Reset simulation
+            deployBtn.disabled = false;
+            deployBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i> Realizar Deploy';
+            systemStatus.className = 'px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm rounded-full';
+            systemStatus.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Estável';
+            
+            investigatePanel.classList.add('hidden');
+            solutionPanel.classList.add('hidden');
+            
+            // Clear logs
+            simulationLogs.innerHTML = '<div class="log-item">[15:50:00] INFO: Sistema inicializado</div><div class="log-item">[15:50:01] INFO: Rotas configuradas</div>';
+            errorCounter = 0;
+            errorCount.textContent = '0 erros';
+            errorCount.className = 'text-xs bg-yellow-500 text-white px-2 py-1 rounded-full';
+            
+            // Reset tracing image
+            document.getElementById('tracing-img').src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgMjAwIj48c3R5bGU+LmJhc2Uge2ZpbGw6bm9uZTtzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MnB4O30udGV4dCB7Zm9udC1mYW1pbHk6QXJpYWw7Zm9udC1zaXplOjE0cHg7fTwvc3R5bGU+PHBhdGggZD0iTTUwIDEwIEwxNTAgMTAgTDIwMCA2MCBMMzAwIDE2MCBINDQwIiBjbGFzcz0iYmFzZSIvPjx0ZXh0IHg9IjUiIHk9IjMwIiBjbGFzcz0idGV4dCI+TWFyY2FQZWRpZG9zPC90ZXh0Pjx0ZXh0IHg9IjE1NSIgeT0iMzAiIGNsYXNzPSJ0ZXh0Ij5BdXRlbnRpY2FjYW88L3RleHQ+PHRleHQgeD0iMjA1IiB5PSI5MCIgY2xhc3M9InRleHQiPlBhZ2FtZW50bzwvdGV4dD48dGV4dCB4PSIzMDUiIHk9IjE4MCIgY2xhc3M9InRleHQiPk5vdGlmaWNhY2FvPC90ZXh0PjxjYXB0aW9uIHg9IjI1MCIgeT0iMTkwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTBweCIgZmlsbD0iIzU1NSI+TWVkaWQ6IDE2MG1zPC9jYXB0aW9uPjwvc3ZnPg==";
+            
+            // Reset charts
+            resetSimulationCharts();
+        });
+
+        function updateSimulationChartsAfterDeploy() {
+            // For CPU
+            simulationChart.data.datasets[0].data = [55, 56, 56, 57, 57, 58, 59, 59, 60, 60, 61, 62, 62, 63, 64, 65, 66, 67, 68, 70, 75, 80, 85, 90];
+            simulationChart.data.datasets[1].data = [60, 60, 61, 61, 61, 62, 62, 62, 63, 63, 63, 64, 64, 65, 65, 65, 65, 66, 66, 67, 68, 70, 75, 80];
+            simulationChart.update();
+            
+            // For errors
+            errorChart.data.datasets[0].data = [2, 1, 0, 1, 0, 2, 1, 0, 3, 2, 1, 0, 2, 1, 3, 2, 5, 8, 15, 30, 80, 150, 250, 400];
+            errorChart.update();
+        }
+
+        function resetSimulationCharts() {
+            // For CPU
+            simulationChart.data.datasets[0].data = Array(24).fill(0).map((_, i) => 50 + Math.sin(i / 4) * 10 + Math.random() * 5);
+            simulationChart.data.datasets[1].data = Array(24).fill(0).map((_, i) => 60 + Math.sin(i / 5) * 5 + Math.random() * 3);
+            simulationChart.update();
+            
+            // For errors
+            errorChart.data.datasets[0].data = Array(24).fill(0).map(() => Math.floor(Math.random() * 5));
+            errorChart.update();
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize all charts
+            initializeCharts();
+            
+            // Initialize Mermaid
+            initializeMermaid();
+            
+            // Start generating logs for the observability section
+            const logsContainer = document.querySelector('#observability .log-stream');
+            if (logsContainer) {
+                setInterval(() => {
+                    const log = generateSimulatedLog();
+                    const logElement = document.createElement('div');
+                    logElement.className = `log-item ${log.type === 'ERROR' ? 'bg-red-900/50 text-red-300' : log.type === 'WARN' ? 'bg-yellow-900/50 text-yellow-300' : 'bg-green-900/50'}`;
+                    logElement.textContent = log.toString();
+                    logsContainer.appendChild(logElement);
+                    
+                    // Keep only the last 20 logs
+                    while (logsContainer.children.length > 20) {
+                        logsContainer.removeChild(logsContainer.firstChild);
+                    }
+                    
+                    // Auto-scroll to bottom
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                }, 2000);
+            }
+            
+            // Set initial active tab
+            document.querySelector('.tab-btn.active').click();
+        });
+    </script>
+</body>
+</html>
